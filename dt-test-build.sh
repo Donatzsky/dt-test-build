@@ -20,7 +20,9 @@ usage="Usage: dt-test-build.sh [-d <path> [-m | -b <branch> | -p <#>] [-r <remot
 -l
    List installed builds
 -u <directory name>
-   Uninstall build"
+   Uninstall build
+-h
+   Show this help"
 
 ######################################################
 ## Configuration
