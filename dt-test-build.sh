@@ -1,6 +1,9 @@
 #!/bin/bash
 
-usage="Usage: dt-test-build.sh [-d <dir> [-m | -b <branch> | -p <#>] [-r <remote|repo URL>] [-s]] [-l] [-u <directory>]
+# MIT License
+# Copyright (c) 2026 Nis Donatzsky Hansen
+
+usage="Usage: dt-test-build.sh [-d <dir> [-m | -b <branch> | -p <#>] [-r <remote|repo URL>] [-s]] [-l] [-u <dir>]
 
 -d
    Directory with darktable Git checkout
@@ -16,7 +19,7 @@ usage="Usage: dt-test-build.sh [-d <dir> [-m | -b <branch> | -p <#>] [-r <remote
    Update submodules
 -l
    List installed builds
--u <directory>
+-u <directory name>
    Uninstall build"
 
 ######################################################
