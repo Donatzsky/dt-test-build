@@ -3,16 +3,16 @@
 # MIT License
 # Copyright (c) 2026 Nis Donatzsky Hansen
 
-usage="Usage: dt-test-build.sh [-d <dir> [-m | -b <branch> | -p <#>] [-r <remote|repo URL>] [-s]] [-l] [-u <dir>]
+usage="Usage: dt-test-build.sh [-d <path> [-m | -b <branch> | -p <#>] [-r <remote|URL>] [-s]] [-l] [-u <name>]
 
--d
+-d <path>
    Directory with darktable Git checkout
 -m
    Build master
 -b <branch name>
    Build branch
 -p <#>
-   Build master with pull request
+   Build pull request
 -r <remote|repo URL>
    Remote or repository URL to fetch branch from
 -s
