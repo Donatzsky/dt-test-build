@@ -3,7 +3,7 @@
 # MIT License
 # Copyright (c) 2026 Nis Donatzsky Hansen
 
-usage="Usage: dt-test-build.sh [-d <path> [-m | -b <branch> | -p <#>] [-r <remote|URL>] [-s] [-l <label>]] [-i | -u <name>]
+usage="Usage: dt-test-build.sh [-d <path> [-m | -b <branch> | -p <#>] [-r <remote|URL>] [-s] [-l <label>] [-c <name>]] [-i | -u <name>]
 
 -d <path>
    Directory with darktable Git checkout
@@ -19,6 +19,8 @@ usage="Usage: dt-test-build.sh [-d <path> [-m | -b <branch> | -p <#>] [-r <remot
    Update submodules
 -l <label>
    Label for the build
+-c <directory name>
+   Override config directory name
 -i
    List installed builds
 -u <directory name>
@@ -53,12 +55,13 @@ pr=0
 # branch_remote in conf
 submodules=0
 label=""
+# config_dir_name in conf
 installed=0
 uninstall=""
 help=0
 bad_flag=0
 
-while getopts d:mb:p:r:sl:iu:h flag
+while getopts d:mb:p:r:sl:c:iu:h flag
 do
 	case "${flag}" in
 		d) source_dir="${OPTARG}";;
@@ -68,6 +71,7 @@ do
 		r) branch_remote="${OPTARG}";;
 		s) submodules=1;;
 		l) label="${OPTARG}";;
+		c) config_dir_name="${OPTARG}";;
 		i) installed=1;;
 		u) uninstall="${OPTARG}";;
 		h) help=1;;
@@ -82,6 +86,11 @@ fi
 
 if [ $master = 0 ] && [ "$branch" = "" ] && [ "$pr" = 0 ] && [ $installed = 0 ] && [ "$uninstall" = "" ]; then
 	echo "One of -m, -b, -p, -i or -u must be specified"
+	exit 1
+fi
+
+if [[ "$config_dir_name" =~ "/" ]]; then
+	echo "Illegal character '/' in config_dir_name"
 	exit 1
 fi
 
@@ -188,29 +197,34 @@ description_esc="${description//\//\\/}" # Don't confuse sed
 dir_desc_safe="${dir_desc//[\$\`\"\'\\~\/ ]/_}" # Not taking any chances
 
 install_dir="${base_install_dir}/darktable-test-${dir_desc_safe}"
-config_dir="${base_config_dir}/darktable-test-${dir_desc_safe}"
+
+if [ "$config_dir_name" = "" ]; then
+	config_dir="${base_config_dir}/darktable-test-${dir_desc_safe}"
+else
+	config_dir="${base_config_dir}/${config_dir_name}"
+fi
 config_dir_esc="${config_dir//\//\\/}"
 
 ## Build and install
 
-rm -r build
-rm -r "$install_dir"
+# rm -r build
+# rm -r "$install_dir"
 
-if ! ./build.sh --prefix "$install_dir" --build-type Release --install; then
-	git switch -q master
-	exit 1
-fi
+# if ! ./build.sh --prefix "$install_dir" --build-type Release --install; then
+# 	git switch -q master
+# 	exit 1
+# fi
 
 git switch -q master
 
-cd "${install_dir}/share/applications/" || exit 1
+# cd "${install_dir}/share/applications/" || exit 1
 
-sed "s/^Name=.*/Name=Darktable (${description_esc})/" "org.darktable.darktable.desktop" |
-	sed "s/%U/--configdir \"${config_dir_esc}\" %U/" > "darktable-test-${dir_desc_safe}.desktop"
+# sed "s/^Name=.*/Name=Darktable (${description_esc})/" "org.darktable.darktable.desktop" |
+# 	sed "s/%U/--configdir \"${config_dir_esc}\" %U/" > "darktable-test-${dir_desc_safe}.desktop"
 
-xdg-desktop-menu install "darktable-test-${dir_desc_safe}.desktop"
+# xdg-desktop-menu install "darktable-test-${dir_desc_safe}.desktop"
 
-mkdir "$config_dir"
+# mkdir "$config_dir"
 
 echo
 echo "Installed to: ${install_dir}"
