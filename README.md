@@ -6,7 +6,7 @@ Install location can be configured in the script. Default is `$HOME/.local/bin`.
 
 ---
 
-Usage: `dt-test-build.sh [-d <path> [-m | -b <branch> | -p <#>] [-r <remote|URL>] [-s] [-l <label>] [-c <name>]] [-i | -u <name>]`
+Usage: `dt-test-build.sh [-d <path> [-m | -b <branch> | -p <#>] [-r <remote|URL>] [-s] [-l <label>] [-c <name>] [-t <config>]] [-i | -u <name>]`
 
 `-d <path>`
    Directory with darktable Git checkout
@@ -31,6 +31,9 @@ Usage: `dt-test-build.sh [-d <path> [-m | -b <branch> | -p <#>] [-r <remote|URL>
 
 `-c <directory name>`
    Override config directory name
+
+`-t <config directory name>`
+   Copy (transfer) existing config
 
 `-i`
    List installed builds
