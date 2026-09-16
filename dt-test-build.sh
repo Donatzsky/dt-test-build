@@ -35,6 +35,7 @@ base_config_dir="$XDG_CONFIG_HOME"
 
 # Maybe modify, but careful
 source_dir=""
+config_dir=""
 branch_remote=""
 
 # Should normally not be modified
@@ -46,9 +47,11 @@ temp_dir="/tmp"
 
 ## Flags
 
+# source_dir in conf
 master=0
 branch=""
 pr=0
+# branch_remote in conf
 submodules=0
 label=""
 installed=0
@@ -142,10 +145,11 @@ if [ $submodules = 1 ]; then
 fi
 git fetch "$tags_remote" --tags
 
+tag=""
+
 # Building master
 if [ $master = 1 ]; then
 	version=$(./tools/get_git_version_string.sh)
-	tag="$version"
 fi
 
 # Building branch
@@ -158,7 +162,7 @@ if [ "$branch" != "" ]; then
 	git checkout FETCH_HEAD
 
 	version=$(./tools/get_git_version_string.sh)
-	tag="${version}_${branch}"
+	tag="${branch}"
 fi
 
 # Building PR
@@ -167,21 +171,29 @@ if [ $pr -gt 0 ]; then
 	git checkout FETCH_HEAD
 
 	version="$(./tools/get_git_version_string.sh)"
-	tag="${version}_pr${pr}"
+	tag="pr${pr}"
 fi
 
-if [ "$label" = "" ]; then
-	description="${tag}"
-	tag_label="${tag}"
+## Description
+
+if [ "$tag" = "" ]; then
+	description="${version}"
+	dir_desc="${version}"
 else
-	description="${tag} / ${label}"
-	tag_label="${tag}_${label}"
+	description="${version} / ${tag}"
+	dir_desc="${version}_${tag}"
 fi
-description_esc="${description//\//\\/}" # Don't confuse sed
-tag_label_safe="${tag_label//[\$\`\"\'\\~\/ ]/_}"
 
-install_dir="${base_install_dir}/darktable-test-${tag_label_safe}"
-config_dir="${base_config_dir}/darktable-test-${tag_label_safe}"
+if [ "$label" != "" ]; then
+	description="${description} / ${label}"
+	dir_desc="${dir_desc}_${label}"
+fi
+
+description_esc="${description//\//\\/}" # Don't confuse sed
+dir_desc_safe="${dir_desc//[\$\`\"\'\\~\/ ]/_}" # Not taking any chances
+
+install_dir="${base_install_dir}/darktable-test-${dir_desc_safe}"
+config_dir="${base_config_dir}/darktable-test-${dir_desc_safe}"
 config_dir_esc="${config_dir//\//\\/}"
 
 ## Build and install
@@ -191,17 +203,15 @@ rm -r "$install_dir"
 
 if ! ./build.sh --prefix "$install_dir" --build-type Release --install; then
 	git switch -q master
-	echo
-	echo "Something went wrong"
 	exit 1
 fi
 
 git switch -q master
 
 sed "s/^Name=.*/Name=Darktable (${description_esc})/" "${install_dir}/share/applications/org.darktable.darktable.desktop" |
-	sed "s/%U/--configdir \"${config_dir_esc}\" %U/" > "${temp_dir}/darktable-test-${tag_label_safe}.desktop"
+	sed "s/%U/--configdir \"${config_dir_esc}\" %U/" > "${temp_dir}/darktable-test-${dir_desc_safe}.desktop"
 
-xdg-desktop-menu install "${temp_dir}/darktable-test-${tag_label_safe}.desktop"
+xdg-desktop-menu install "${temp_dir}/darktable-test-${dir_desc_safe}.desktop"
 
 mkdir "$config_dir"
 
