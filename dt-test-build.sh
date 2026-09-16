@@ -29,19 +29,18 @@ usage="Usage: dt-test-build.sh [-d <path> [-m | -b <branch> | -p <#>] [-r <remot
 ######################################################
 ## Configuration
 
-# Modify as needed. No trailing /
+# Modify as needed
 base_install_dir="$HOME/.local/bin"
 base_config_dir="$XDG_CONFIG_HOME"
 
 # Maybe modify, but careful
 source_dir=""
-config_dir=""
+config_dir_name="" # Disables automatic unique config directories
 branch_remote=""
 
 # Should normally not be modified
 pr_remote="https://github.com/darktable-org/darktable"
 tags_remote="https://github.com/darktable-org/darktable"
-temp_dir="/tmp"
 
 ######################################################
 
@@ -76,11 +75,7 @@ do
 	esac
 done
 
-if [ $bad_flag = 1 ]; then
-	exit 1
-fi
-
-if [ ! "$#" -gt 0 ] || [ $help = 1 ]; then
+if [ ! "$#" -gt 0 ] || [ $help = 1 ] || [ $bad_flag = 1 ]; then
 	echo "$usage"
 	exit
 fi
@@ -208,10 +203,12 @@ fi
 
 git switch -q master
 
-sed "s/^Name=.*/Name=Darktable (${description_esc})/" "${install_dir}/share/applications/org.darktable.darktable.desktop" |
-	sed "s/%U/--configdir \"${config_dir_esc}\" %U/" > "${temp_dir}/darktable-test-${dir_desc_safe}.desktop"
+cd "${install_dir}/share/applications/" || exit 1
 
-xdg-desktop-menu install "${temp_dir}/darktable-test-${dir_desc_safe}.desktop"
+sed "s/^Name=.*/Name=Darktable (${description_esc})/" "org.darktable.darktable.desktop" |
+	sed "s/%U/--configdir \"${config_dir_esc}\" %U/" > "darktable-test-${dir_desc_safe}.desktop"
+
+xdg-desktop-menu install "darktable-test-${dir_desc_safe}.desktop"
 
 mkdir "$config_dir"
 
