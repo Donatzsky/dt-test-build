@@ -85,7 +85,7 @@ if [ ! "$#" -gt 0 ] || [ $help = 1 ]; then
 	exit
 fi
 
-if [ $master = 0 ] && [ "$branch" = "" ] && [ $pr = 0 ] && [ $installed = 0 ] && [ "$uninstall" = "" ]; then
+if [ $master = 0 ] && [ "$branch" = "" ] && [ "$pr" = 0 ] && [ $installed = 0 ] && [ "$uninstall" = "" ]; then
 	echo "One of -m, -b, -p, -i or -u must be specified"
 	exit 1
 fi
@@ -95,7 +95,7 @@ fi
 if [ $installed = 1 ]; then
 	echo "Installed builds:"
 	echo
-	cd "$base_install_dir"
+	cd "$base_install_dir" || exit
 	ls -d darktable-test-*
 	exit
 fi
@@ -109,14 +109,14 @@ if [ "$uninstall" != "" ]; then
 	read -p "Remove application? (y/N) " -n 1 -r
 	echo
 	if [[ $REPLY =~ ^[Yy]$ ]]; then
-		rm -r "${base_install_dir}/${uninstall}"
+		rm -r "${base_install_dir:?}/${uninstall}"
 		xdg-desktop-menu uninstall "${uninstall}.desktop"
 	fi
 
 	read -p "Remove config? (y/N) " -n 1 -r
 	echo
 	if [[ $REPLY =~ ^[Yy]$ ]]; then
-		rm -r "${base_config_dir}/${uninstall}"
+		rm -r "${base_config_dir:?}/${uninstall}"
 	fi
 
 	exit
@@ -166,8 +166,8 @@ if [ "$branch" != "" ]; then
 fi
 
 # Building PR
-if [ $pr -gt 0 ]; then
-	git fetch "$pr_remote" pull/$pr/head || exit 1
+if [ "$pr" -gt 0 ]; then
+	git fetch "$pr_remote" pull/"$pr"/head || exit 1
 	git checkout FETCH_HEAD
 
 	version="$(./tools/get_git_version_string.sh)"
