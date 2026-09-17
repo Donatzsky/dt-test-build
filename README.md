@@ -6,25 +6,28 @@ Install location can be configured in the script. Default is `$HOME/.local/bin`.
 
 ---
 
-Usage: `dt-test-build.sh [-d <path> [-m | -b <branch> | -p <#>] [-r <remote|URL>] [-s] [-l <label>] [-c <name>] [-t <config>]] [-i | -u <name>]`
+Usage: `dt-test-build.sh [-s <path> [-m | -p <#> | [-b <branch> -r <remote|URL>]] [-S] [-a <args>] [-l <label>] [-c <name>] [-d <config>] [-x]] [-i | -u <name>]`
 
-`-d <path>`
-   Directory with darktable Git checkout
+`-s <path>`
+   Directory with darktable source Git checkout
 
 `-m`
    Build master
 
-`-b <branch name>`
-   Build branch
-
 `-p <1234>`
    Build pull request
+
+`-b <branch name>`
+   Build branch
 
 `-r <remote|repo URL>`
    Remote or repository URL to fetch branch from
 
-`-s`
+`-S`
    Update submodules
+
+`-a <build arguments>`
+   Pass arguments directly to build.sh
 
 `-l <label>`
    Label for the build
@@ -32,8 +35,11 @@ Usage: `dt-test-build.sh [-d <path> [-m | -b <branch> | -p <#>] [-r <remote|URL>
 `-c <directory name>`
    Override config directory name
 
-`-t <config directory name>`
-   Copy (transfer) existing config
+`-d <config directory name>`
+   Duplicate (copy) existing config
+
+`-x`
+   Dry-run. Don't build or install
 
 `-i`
    List installed builds

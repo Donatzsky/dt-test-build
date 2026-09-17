@@ -3,26 +3,30 @@
 # MIT License
 # Copyright (c) 2026 Nis Donatzsky Hansen
 
-usage="Usage: dt-test-build.sh [-d <path> [-m | -b <branch> | -p <#>] [-r <remote|URL>] [-s] [-l <label>] [-c <name>] [-t <config>]] [-i | -u <name>]
+usage="Usage: dt-test-build.sh [-s <path> [-m | -p <#> | [-b <branch> -r <remote|URL>]] [-S] [-a <args>] [-l <label>] [-c <name>] [-d <config>] [-x]] [-i | -u <name>]
 
--d <path>
-   Directory with darktable Git checkout
+-s <path>
+   Directory with darktable source Git checkout
 -m
    Build master
--b <branch name>
-   Build branch
 -p <1234>
    Build pull request
+-b <branch name>
+   Build branch
 -r <remote|repo URL>
    Remote or repository URL to fetch branch from
--s
+-S
    Update submodules
+-a <build arguments>
+   Pass arguments directly to build.sh
 -l <label>
    Label for the build
 -c <directory name>
    Override config directory name
--t <config directory name>
-   Copy (transfer) existing config
+-d <config directory name>
+   Duplicate (copy) existing config
+-x
+   Dry-run. Don't build or install
 -i
    List installed builds
 -u <directory name>
@@ -36,10 +40,11 @@ usage="Usage: dt-test-build.sh [-d <path> [-m | -b <branch> | -p <#>] [-r <remot
 # Modify as needed
 base_install_dir="$HOME/.local/bin"
 base_config_dir="$XDG_CONFIG_HOME"
+build_args="" # Concatenated with -a
 
-# Maybe modify, but careful
+# Maybe modify, but careful. Arguments take precedence
 source_dir=""
-config_transfer_dir=""
+config_copy_dir=""
 config_dir_name="" # Disables automatic unique config directories
 branch_remote=""
 
@@ -57,26 +62,30 @@ branch=""
 pr=0
 # branch_remote in config
 submodules=0
+# build_args in config
 label=""
 # config_dir_name in config
-# config_transfer_dir in config
+# config_copy_dir in config
+dryrun=0
 installed=0
 uninstall=""
 help=0
 bad_flag=0
 
-while getopts d:mb:p:r:sl:c:t:iu:h flag
+while getopts s:mb:p:r:Sa:l:c:d:xiu:h flag
 do
 	case "$flag" in
-		d) source_dir="$OPTARG";;
+		s) source_dir="$OPTARG";;
 		m) master=1;;
 		b) branch="$OPTARG";;
 		p) pr="$OPTARG";;
 		r) branch_remote="$OPTARG";;
-		s) submodules=1;;
+		S) submodules=1;;
+		a) build_args="$build_args $OPTARG";;
 		l) label="$OPTARG";;
 		c) config_dir_name="$OPTARG";;
-		t) config_transfer_dir="$OPTARG";;
+		d) config_copy_dir="$OPTARG";;
+		x) dryrun="$OPTARG";;
 		i) installed=1;;
 		u) uninstall="$OPTARG";;
 		h) help=1;;
@@ -101,13 +110,13 @@ if [[ "$config_dir_name" =~ "/" ]]; then
 	exit 1
 fi
 
-if [[ "$config_transfer_dir" =~ "/" ]]; then
-	echo "Illegal character '/' in config_transfer_dir (-t)"
+if [[ "$config_copy_dir" =~ "/" ]]; then
+	echo "Illegal character '/' in config_copy_dir (-d)"
 	exit 1
 fi
 
-if [ ! -d "$base_config_dir/$config_transfer_dir" ]; then
-	echo "config_transfer_dir (-t) not found"
+if [ ! -d "$base_config_dir/$config_copy_dir" ]; then
+	echo "config_copy_dir (-d) not found"
 	exit 1
 fi
 
@@ -146,7 +155,7 @@ fi
 ## Prepare
 
 if [ "$source_dir" = "" ]; then
-	echo "Darktable source directory (-d) not specified"
+	echo "Darktable source directory (-s) not specified"
 	exit 1
 fi
 
@@ -166,11 +175,10 @@ if [ $submodules = 1 ]; then
 fi
 git fetch "$tags_remote" --tags
 
-tag=""
-
 # Building master
 if [ $master = 1 ]; then
 	version=$(./tools/get_git_version_string.sh)
+	tag=""
 fi
 
 # Building branch
@@ -225,31 +233,33 @@ config_dir_esc="${config_dir//\//\\/}"
 
 ## Build and install
 
-rm -r build
-rm -r "$install_dir"
+if [ "$dryrun" != 0 ]; then
+	rm -r build
+	rm -r "$install_dir"
 
-if ! ./build.sh --prefix "$install_dir" --build-type Release --install; then
-	git switch -q master
-	exit 1
+	if ! ./build.sh --prefix "$install_dir" --build-type Release --install $build_args; then
+		git switch -q master
+		exit 1
+	fi
+
+	cd "${install_dir}/share/applications/" || exit 1
+
+	sed "s/^Name=.*/Name=Darktable (${description_esc})/" "org.darktable.darktable.desktop" |
+		sed "s/%U/--configdir \"${config_dir_esc}\" %U/" > "darktable-test-${dir_desc_safe}.desktop"
+
+	xdg-desktop-menu install "darktable-test-${dir_desc_safe}.desktop"
+
+	mkdir -p "$config_dir"
+
+	if [ "$config_copy_dir" != "" ]; then
+		echo
+		echo "Copying config from '${config_copy_dir}' to '${config_dir_name}'..."
+		cd "$base_config_dir" || exit 1
+		cp -i -a "$config_copy_dir/." "$config_dir_name/"
+	fi
 fi
 
 git switch -q master
-
-cd "${install_dir}/share/applications/" || exit 1
-
-sed "s/^Name=.*/Name=Darktable (${description_esc})/" "org.darktable.darktable.desktop" |
-	sed "s/%U/--configdir \"${config_dir_esc}\" %U/" > "darktable-test-${dir_desc_safe}.desktop"
-
-xdg-desktop-menu install "darktable-test-${dir_desc_safe}.desktop"
-
-mkdir -p "$config_dir"
-
-if [ "$config_transfer_dir" != "" ]; then
-	echo
-	echo "Copying config from '${config_transfer_dir}' to '${config_dir_name}'..."
-	cd "$base_config_dir" || exit 1
-	cp -i -a "$config_transfer_dir/." "$config_dir_name/"
-fi
 
 echo
 echo "Installed to: ${install_dir}"
