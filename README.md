@@ -4,9 +4,9 @@ All builds get their own config directory and desktop integration.
 
 Install location can be configured in the script. Default is `$HOME/.local/bin`.
 
----
+# Usage
 
-Usage: `dt-test-build.sh [-s <path> [-m | -p <#> | [-b <branch> -r <remote|URL>]] [-S] [-a <args>] [-l <label>] [-c <name>] [-d <config>] [-x]] [-i | -u <name>]`
+`dt-test-build.sh [-s <path> [-m | -p <#> | [-b <branch> -r <remote|URL>]] [-S] [-a <args>] [-l <label>] [-c <name>] [-d <config>] [-x]] [-i | -u <name>]`
 
 `-s <path>`
    Directory with darktable source Git checkout
@@ -49,3 +49,25 @@ Usage: `dt-test-build.sh [-s <path> [-m | -p <#> | [-b <branch> -r <remote|URL>]
 
 `-h`
    Show this help
+
+# Examples
+
+The following assumes the darktable checkout is in `$HOME/darktable`.
+
+Build master:
+`dt-build-test.sh -s "$HOME/darktable" -m`
+
+Give it a label:
+`dt-build-test.sh -s "$HOME/darktable" -m -l "My label"`
+
+Build a pull request:
+`dt-build-test.sh -s "$HOME/darktable" -p 12345`
+
+Build the Contrast & Texture dev branch:
+`dt-test-build.sh -s "$HOME/darktable" -b "contrastntexture_detaillevels" -r "https://github.com/jandren/darktable"`
+
+Uninstall it:
+`dt-test-build.sh -u "darktable-test-5.7.0+362_g6e15409c95-dirty_contrastntexture_detaillevels"`
+
+Find the name:
+`dt-test-build.sh -i`
