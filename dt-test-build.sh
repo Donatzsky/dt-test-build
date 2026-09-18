@@ -72,13 +72,19 @@ uninstall=""
 help=0
 bad_flag=0
 
+build_flags=0
+manage_flags=0
+
 while getopts s:mb:p:r:Sa:l:c:d:xiu:h flag
 do
 	case "$flag" in
 		s) source_dir="$OPTARG";;
-		m) master=1;;
-		b) branch="$OPTARG";;
-		p) pr="$OPTARG";;
+		m) master=1
+		   ((build_flags++));;
+		b) branch="$OPTARG"
+		   ((build_flags++));;
+		p) pr="$OPTARG"
+		   ((build_flags++));;
 		r) branch_remote="$OPTARG";;
 		S) submodules=1;;
 		a) build_args="$build_args $OPTARG";;
@@ -86,8 +92,10 @@ do
 		c) config_dir_name="$OPTARG";;
 		d) config_copy_dir="$OPTARG";;
 		x) dryrun="$OPTARG";;
-		i) installed=1;;
-		u) uninstall="$OPTARG";;
+		i) installed=1
+		   ((manage_flags++));;
+		u) uninstall="$OPTARG"
+		   ((manage_flags++));;
 		h) help=1;;
 		*) bad_flag=1;;
 	esac
@@ -98,12 +106,32 @@ if [ ! "$#" -gt 0 ] || [ $help = 1 ] || [ $bad_flag = 1 ]; then
 	exit
 fi
 
-if [ $master = 0 ] && [ "$branch" = "" ] && [ "$pr" = 0 ] && [ $installed = 0 ] && [ "$uninstall" = "" ]; then
+## Validate input
+
+if [ $build_flags = 0 ] && [ $manage_flags = 0 ]; then
 	echo "One of -m, -b, -p, -i or -u must be specified"
 	exit 1
 fi
 
-## Validate input
+if [ $build_flags -gt 0 ] && [ $manage_flags -gt 0 ]; then
+	echo "Incompatible arguments"
+	exit 1
+fi
+
+if [ $build_flags -gt 1 ] || [ $manage_flags -gt 1 ]; then
+	echo "Too many arguments of same type"
+	exit 1
+fi
+
+if [ $build_flags = 1 ] && [ "$source_dir" = "" ]; then
+	echo "Darktable source directory (-s) not specified"
+	exit 1
+fi
+
+if [ "$branch" != "" ] && [ "$branch_remote" = "" ]; then
+	echo "Remote (-r) required to fetch branch"
+	exit 1
+fi
 
 if [[ "$config_dir_name" =~ "/" ]]; then
 	echo "Illegal character '/' in config_dir_name (-c)"
@@ -115,7 +143,7 @@ if [[ "$config_copy_dir" =~ "/" ]]; then
 	exit 1
 fi
 
-if [ ! -d "$base_config_dir/$config_copy_dir" ]; then
+if [ "$config_copy_dir" != "" ] && [ ! -d "$base_config_dir/$config_copy_dir" ]; then
 	echo "config_copy_dir (-d) not found"
 	exit 1
 fi
@@ -154,11 +182,6 @@ fi
 
 ## Prepare
 
-if [ "$source_dir" = "" ]; then
-	echo "Darktable source directory (-s) not specified"
-	exit 1
-fi
-
 cd "$source_dir" || exit 1
 
 if [ ! -f build.sh ]; then
@@ -168,7 +191,7 @@ fi
 
 git switch -q master
 echo "Pulling master..."
-git pull
+git pull || exit 1
 if [ $submodules = 1 ]; then
 	echo "Updating submodules..."
 	git submodule update
@@ -183,10 +206,6 @@ fi
 
 # Building branch
 if [ "$branch" != "" ]; then
-	if [ "$branch_remote" = "" ]; then
-		echo "Remote (-r) required to fetch branch"
-		exit 1
-	fi
 	git fetch "$branch_remote" "$branch" || exit 1
 	git checkout FETCH_HEAD
 
@@ -233,7 +252,7 @@ config_dir_esc="${config_dir//\//\\/}"
 
 ## Build and install
 
-if [ "$dryrun" != 0 ]; then
+if [ "$dryrun" = 0 ]; then
 	rm -r build
 	rm -r "$install_dir"
 
@@ -249,6 +268,8 @@ if [ "$dryrun" != 0 ]; then
 
 	xdg-desktop-menu install "darktable-test-${dir_desc_safe}.desktop"
 
+	cd - > /dev/null
+
 	mkdir -p "$config_dir"
 
 	if [ "$config_copy_dir" != "" ]; then
@@ -256,6 +277,7 @@ if [ "$dryrun" != 0 ]; then
 		echo "Copying config from '${config_copy_dir}' to '${config_dir_name}'..."
 		cd "$base_config_dir" || exit 1
 		cp -i -a "$config_copy_dir/." "$config_dir_name/"
+		cd - > /dev/null
 	fi
 fi
 
