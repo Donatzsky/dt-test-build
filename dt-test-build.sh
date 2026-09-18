@@ -3,7 +3,7 @@
 # MIT License
 # Copyright (c) 2026 Nis Donatzsky Hansen
 
-usage="Usage: dt-test-build.sh [-s <path> [-m | -p <#> | [-b <branch> -r <remote|URL>]] [-S] [-a <args>] [-t] [-l <label>] [-c <name>] [-d <config>] [-x]] [-i | -u <name>]
+usage="Usage: dt-test-build.sh [-s <path> [-m | -p <#> | [-b <branch> -r <remote|URL>]] [-a <args>] [-t] [-l <label>] [-c <name>] [-d <config>] [-x]] [-i | -u <name>]
 
 -s <path>
    Directory with darktable source Git checkout
@@ -15,8 +15,6 @@ usage="Usage: dt-test-build.sh [-s <path> [-m | -p <#> | [-b <branch> -r <remote
    Build branch
 -r <remote|repo URL>
    Remote or repository URL to fetch branch from
--S
-   Update submodules
 -a <build arguments>
    Pass arguments directly to build.sh
 -t
@@ -64,7 +62,6 @@ master=0
 branch=""
 pr=0
 # branch_remote in config
-submodules=0
 # build_args in config
 datetime=""
 label=""
@@ -90,7 +87,6 @@ do
 		p) pr="$OPTARG"
 		   ((build_flags++));;
 		r) branch_remote="$OPTARG";;
-		S) submodules=1;;
 		a) build_args="$build_args $OPTARG";;
 		t) datetime=$(date "${datetime_format}");;
 		l) label="$OPTARG";;
@@ -197,10 +193,9 @@ fi
 git switch -q master
 echo "Pulling master..."
 git pull || exit 1
-if [ $submodules = 1 ]; then
-	echo "Updating submodules..."
-	git submodule update
-fi
+echo "Updating submodules..."
+git submodule update
+echo "Updating tags..."
 git fetch "$tags_remote" --tags
 
 if [ $master = 1 ]; then
@@ -270,7 +265,6 @@ if [ "$dryrun" = 0 ]; then
 	sed "s/^Name=.*/Name=Darktable (${description_esc})/" "org.darktable.darktable.desktop" |
 		sed "s/%U/--configdir \"${config_dir_esc}\" %U/" > "darktable-test-${dir_desc_safe}.desktop"
 	xdg-desktop-menu install "darktable-test-${dir_desc_safe}.desktop"
-	cd - > /dev/null
 
 	cd "$base_config_dir" || exit 1
 	mkdir "$config_dir_name"
@@ -279,9 +273,9 @@ if [ "$dryrun" = 0 ]; then
 		echo "Copying config from '${config_copy_dir}' to '${config_dir_name}'..."
 		cp -i -a "$config_copy_dir/." "$config_dir_name/"
 	fi
-	cd - > /dev/null
 fi
 
+cd "$source_dir" || exit 1
 git switch -q master
 
 echo

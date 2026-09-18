@@ -6,7 +6,7 @@ Install location can be configured in the script. Default is `$HOME/.local/bin`.
 
 # Usage
 
-`dt-test-build.sh [-s <path> [-m | -p <#> | [-b <branch> -r <remote|URL>]] [-S] [-a <args>] [-t] [-l <label>] [-c <name>] [-d <config>] [-x]] [-i | -u <name>]`
+`dt-test-build.sh [-s <path> [-m | -p <#> | [-b <branch> -r <remote|URL>]] [-a <args>] [-t] [-l <label>] [-c <name>] [-d <config>] [-x]] [-i | -u <name>]`
 
 `-s <path>`
    Directory with darktable source Git checkout
@@ -22,9 +22,6 @@ Install location can be configured in the script. Default is `$HOME/.local/bin`.
 
 `-r <remote|repo URL>`
    Remote or repository URL to fetch branch from
-
-`-S`
-   Update submodules
 
 `-a <build arguments>`
    Pass arguments directly to build.sh
