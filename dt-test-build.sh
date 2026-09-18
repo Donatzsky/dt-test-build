@@ -198,13 +198,11 @@ if [ $submodules = 1 ]; then
 fi
 git fetch "$tags_remote" --tags
 
-# Building master
 if [ $master = 1 ]; then
 	version=$(./tools/get_git_version_string.sh)
 	tag=""
 fi
 
-# Building branch
 if [ "$branch" != "" ]; then
 	git fetch "$branch_remote" "$branch" || exit 1
 	git checkout FETCH_HEAD
@@ -213,7 +211,6 @@ if [ "$branch" != "" ]; then
 	tag="${branch}"
 fi
 
-# Building PR
 if [ "$pr" -gt 0 ]; then
 	git fetch "$pr_remote" pull/"$pr"/head || exit 1
 	git checkout FETCH_HEAD
@@ -244,10 +241,8 @@ install_dir="${base_install_dir}/darktable-test-${dir_desc_safe}"
 
 if [ "$config_dir_name" = "" ]; then
 	config_dir_name="darktable-test-${dir_desc_safe}"
-	config_dir="${base_config_dir}/${config_dir_name}"
-else
-	config_dir="${base_config_dir}/${config_dir_name}"
 fi
+config_dir="${base_config_dir}/${config_dir_name}"
 config_dir_esc="${config_dir//\//\\/}"
 
 ## Build and install
@@ -262,23 +257,19 @@ if [ "$dryrun" = 0 ]; then
 	fi
 
 	cd "${install_dir}/share/applications/" || exit 1
-
 	sed "s/^Name=.*/Name=Darktable (${description_esc})/" "org.darktable.darktable.desktop" |
 		sed "s/%U/--configdir \"${config_dir_esc}\" %U/" > "darktable-test-${dir_desc_safe}.desktop"
-
 	xdg-desktop-menu install "darktable-test-${dir_desc_safe}.desktop"
-
 	cd - > /dev/null
 
-	mkdir -p "$config_dir"
-
+	cd "$base_config_dir" || exit 1
+	mkdir "$config_dir_name"
 	if [ "$config_copy_dir" != "" ]; then
 		echo
 		echo "Copying config from '${config_copy_dir}' to '${config_dir_name}'..."
-		cd "$base_config_dir" || exit 1
 		cp -i -a "$config_copy_dir/." "$config_dir_name/"
-		cd - > /dev/null
 	fi
+	cd - > /dev/null
 fi
 
 git switch -q master
