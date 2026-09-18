@@ -3,7 +3,7 @@
 # MIT License
 # Copyright (c) 2026 Nis Donatzsky Hansen
 
-usage="Usage: dt-test-build.sh [-s <path> [-m | -p <#> | [-b <branch> -r <remote|URL>]] [-S] [-a <args>] [-l <label>] [-c <name>] [-d <config>] [-x]] [-i | -u <name>]
+usage="Usage: dt-test-build.sh [-s <path> [-m | -p <#> | [-b <branch> -r <remote|URL>]] [-S] [-a <args>] [-t] [-l <label>] [-c <name>] [-d <config>] [-x]] [-i | -u <name>]
 
 -s <path>
    Directory with darktable source Git checkout
@@ -19,8 +19,10 @@ usage="Usage: dt-test-build.sh [-s <path> [-m | -p <#> | [-b <branch> -r <remote
    Update submodules
 -a <build arguments>
    Pass arguments directly to build.sh
+-t
+   Label with date and time
 -l <label>
-   Label for the build
+   Custom label
 -c <directory name>
    Override config directory name
 -d <config directory name>
@@ -41,6 +43,7 @@ usage="Usage: dt-test-build.sh [-s <path> [-m | -p <#> | [-b <branch> -r <remote
 base_install_dir="$HOME/.local/bin"
 base_config_dir="$XDG_CONFIG_HOME"
 build_args="" # Concatenated with -a
+datetime_format="+%Y-%m-%d %H:%M" # date command
 
 # Maybe modify, but careful. Arguments take precedence
 source_dir=""
@@ -63,6 +66,7 @@ pr=0
 # branch_remote in config
 submodules=0
 # build_args in config
+datetime=""
 label=""
 # config_dir_name in config
 # config_copy_dir in config
@@ -75,7 +79,7 @@ bad_flag=0
 build_flags=0
 manage_flags=0
 
-while getopts s:mb:p:r:Sa:l:c:d:xiu:h flag
+while getopts s:mb:p:r:Sa:tl:c:d:xiu:h flag
 do
 	case "$flag" in
 		s) source_dir="$OPTARG";;
@@ -88,6 +92,7 @@ do
 		r) branch_remote="$OPTARG";;
 		S) submodules=1;;
 		a) build_args="$build_args $OPTARG";;
+		t) datetime=$(date "${datetime_format}");;
 		l) label="$OPTARG";;
 		c) config_dir_name="$OPTARG";;
 		d) config_copy_dir="$OPTARG";;
@@ -227,6 +232,11 @@ if [ "$tag" = "" ]; then
 else
 	description="${version} / ${tag}"
 	dir_desc="${version}_${tag}"
+fi
+
+if [ "$datetime" != "" ]; then
+	description="${description} / ${datetime}"
+	dir_desc="${dir_desc}_${datetime}"
 fi
 
 if [ "$label" != "" ]; then
