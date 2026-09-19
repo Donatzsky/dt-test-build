@@ -184,6 +184,7 @@ fi
 ## Prepare
 
 cd "$source_dir" || exit 1
+source_dir=$(pwd)
 
 if [ ! -f build.sh ]; then
 	echo "build.sh not found"
