@@ -41,7 +41,7 @@ usage="Usage: dt-test-build.sh [-s <path> [-m | -p <#> | [-b <branch> -r <remote
 
 # Modify as needed
 base_install_dir="$HOME/.local/bin"
-base_config_dir="$XDG_CONFIG_HOME"
+base_config_dir="${XDG_CONFIG_HOME:-$HOME/.config}"
 build_args="" # Concatenated with -a
 datetime_format="+%Y-%m-%d %H:%M" # date command
 
