@@ -6,7 +6,7 @@ Install location can be configured in the script. Default is `$HOME/.local/bin`.
 
 # Usage
 
-`dt-test-build.sh [-s <path> [-m | -p <#> | [-b <branch> -r <remote|URL>]] [-a <args>] [-t] [-l <label>] [-c <name>] [-d <config>] [-x]] [-i | -u <name>]`
+`dt-test-build.sh [-s <path> [-m | -p <#> | [-b <branch> -r <remote|URL>]] [-a <args>] [-t] [-l <label>] [-c <name>] [-d <config>] [-x] [-z]] [-i | -u <name>]`
 
 `-s <path>`
    Directory with darktable source Git checkout
@@ -35,10 +35,13 @@ Install location can be configured in the script. Default is `$HOME/.local/bin`.
 `-c <directory name>`
    Override config directory name
 
-`-d <config directory name>`
+`-d <directory name>`
    Duplicate (copy) existing config
 
 `-x`
+   Do not update repository before building
+
+`-z`
    Dry-run. Don't build or install
 
 `-i`

@@ -3,7 +3,7 @@
 # MIT License
 # Copyright (c) 2026 Nis Donatzsky Hansen
 
-usage="Usage: dt-test-build.sh [-s <path> [-m | -p <#> | [-b <branch> -r <remote|URL>]] [-a <args>] [-t] [-l <label>] [-c <name>] [-d <config>] [-x]] [-i | -u <name>]
+usage="Usage: dt-test-build.sh [-s <path> [-m | -p <#> | [-b <branch> -r <remote|URL>]] [-a <args>] [-t] [-l <label>] [-c <name>] [-d <config>] [-x] [-z]] [-i | -u <name>]
 
 -s <path>
    Directory with darktable source Git checkout
@@ -23,9 +23,11 @@ usage="Usage: dt-test-build.sh [-s <path> [-m | -p <#> | [-b <branch> -r <remote
    Custom label
 -c <directory name>
    Override config directory name
--d <config directory name>
+-d <directory name>
    Duplicate (copy) existing config
 -x
+   Do not update repository before building
+-z
    Dry-run. Don't build or install
 -i
    List installed builds
@@ -67,6 +69,7 @@ datetime=""
 label=""
 # config_dir_name in config
 # config_copy_dir in config
+no_update=0
 dryrun=0
 installed=0
 uninstall=""
@@ -76,7 +79,7 @@ bad_flag=0
 build_flags=0
 manage_flags=0
 
-while getopts s:mb:p:r:Sa:tl:c:d:xiu:h flag
+while getopts s:mb:p:r:a:tl:c:d:xziu:h flag
 do
 	case "$flag" in
 		s) source_dir="$OPTARG";;
@@ -92,7 +95,8 @@ do
 		l) label="$OPTARG";;
 		c) config_dir_name="$OPTARG";;
 		d) config_copy_dir="$OPTARG";;
-		x) dryrun="$OPTARG";;
+		x) no_update=1;;
+		z) dryrun=1;;
 		i) installed=1
 		   ((manage_flags++));;
 		u) uninstall="$OPTARG"
@@ -191,13 +195,15 @@ if [ ! -f build.sh ]; then
 	exit 1
 fi
 
-git switch -q master
-echo "Pulling master..."
-git pull || exit 1
-echo "Updating submodules..."
-git submodule update
-echo "Updating tags..."
-git fetch "$tags_remote" --tags
+if [ "$no_update" = 0 ]; then
+	git switch -q master
+	echo "Pulling master..."
+	git pull || exit 1
+	echo "Updating submodules..."
+	git submodule update
+	echo "Updating tags..."
+	git fetch "$tags_remote" --tags
+fi
 
 if [ $master = 1 ]; then
 	version=$(./tools/get_git_version_string.sh)
